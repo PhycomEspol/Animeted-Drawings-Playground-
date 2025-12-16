@@ -203,7 +203,7 @@ export async function runSketchAutomation(
     
     // 5. Download the MP4 video file to a temp location
     console.log('Downloading animation MP4...');
-    const mp4TempPath = outputPath.replace(/\.gif$/i, '.mp4');
+    const mp4TempPath = outputPath.replace(/\.(gif|webp)$/i, '.mp4');
     
     try {
       const response = await fetch(finalVideoUrl);
@@ -215,19 +215,22 @@ export async function runSketchAutomation(
       fs.writeFileSync(mp4TempPath, buffer);
       console.log(`MP4 saved to: ${mp4TempPath}`);
 
-      // 6. Convert MP4 to GIF with cropping
-      console.log('Converting MP4 to GIF...');
+      // 6. Convert MP4 to WebP with cropping and transparent background
+      console.log('Converting MP4 to WebP with transparent background...');
       const { convertMp4ToGif } = await import('./videoConverter');
-      const gifPath = await convertMp4ToGif(mp4TempPath, mp4TempPath, {
+      const outputFilePath = await convertMp4ToGif(mp4TempPath, mp4TempPath, {
         // Crop pixels from each edge - these values should be visible in the output
         cropTop: 100,
         cropBottom: 100,
         cropLeft: 50,
         cropRight: 50,
         width: 480,
-        fps: 15
+        fps: 15,
+        // Remove the off-white background and output as WebP for full alpha support
+        removeBackground: true,
+        outputFormat: 'webp'
       });
-      console.log(`GIF created: ${gifPath}`);
+      console.log(`WebP created: ${outputFilePath}`);
       
       // Optionally delete the temp MP4 file
       fs.unlinkSync(mp4TempPath);
@@ -236,7 +239,7 @@ export async function runSketchAutomation(
     } catch (downloadError) {
       console.error('Failed to download/convert video, taking screenshot as fallback:', downloadError);
       // Fallback to screenshot with .png extension
-      const pngOutputPath = outputPath.replace(/\.gif$/i, '.png');
+      const pngOutputPath = outputPath.replace(/\.(gif|webp)$/i, '.png');
       const canvasElement = await page.$('canvas');
       if (canvasElement) {
         await canvasElement.screenshot({ path: pngOutputPath });
