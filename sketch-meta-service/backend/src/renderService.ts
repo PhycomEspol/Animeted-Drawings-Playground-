@@ -21,7 +21,7 @@ export const renderService = {
     // Input/Output paths
     const inputExt = path.extname(file.originalname) || '.png';
     const inputFilename = `${id}${inputExt}`;
-    const outputFilename = `${id}.gif`;
+    const outputFilename = `${id}.webp`;
     
     // Absolute paths (adjust based on where server runs, assuming root/storage is accessible)
     // We assume the process runs from 'backend' or 'root'. Let's resolve relative to process.cwd()

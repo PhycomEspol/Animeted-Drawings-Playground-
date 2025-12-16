@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "POC for Meta Sketch Automation",
   "scripts": {
-    "dev": "npm run build --prefix backend && concurrently \"npm run serve --prefix backend\" \"npm run emulators\"",
-    "dev:debug": "npm run build --prefix backend && concurrently \"set PLAYWRIGHT_HEADLESS=false&& npm run serve --prefix backend\" \"npm run emulators\"",
-    "emulators": "firebase emulators:start --only firestore --project meta-automation-poc",
+    "dev": "npm run build --prefix backend && npm run serve --prefix backend",
+    "dev:debug": "set PLAYWRIGHT_HEADLESS=false&& npm run build --prefix backend && npm run serve --prefix backend",
+    "start:firestore": "firebase emulators:start --only firestore --project meta-automation-poc",
     "install:all": "npm install && cd backend && npm install"
   },
   "dependencies": {
