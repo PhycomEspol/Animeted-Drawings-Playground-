@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.js.map
+
+# Debug logs
+*-debug.log
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Storage outputs (optional - remove if you want to track these)
+storage/outputs/
+storage/inputs/
+
+# Firebase cache
+.firebase/
