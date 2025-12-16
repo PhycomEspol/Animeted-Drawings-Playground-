@@ -22,18 +22,18 @@ async function maybeClickAccept(page: Page): Promise<void> {
   try {
     // Prioritize checking for the specific modal
     const specificModalFooterSelector = 'div.modal-footer.pb-4';
-    const specificModalFooterVisible = await page.isVisible(specificModalFooterSelector, { timeout: 3000 });
+    const specificModalFooterVisible = await page.isVisible(specificModalFooterSelector, { timeout: 1000 });
 
     if (specificModalFooterVisible) {
       console.log('Specific modal with footer "div.modal-footer.pb-4" detected.');
-      await page.waitForSelector(modalAcceptButtonSelector, { state: 'visible', timeout: 3000 });
+      await page.waitForSelector(modalAcceptButtonSelector, { state: 'visible', timeout: 1000 });
       console.log('Found "Accept" button within the specific modal, clicking it...');
       await page.click(modalAcceptButtonSelector);
       console.log('Specific modal "Accept" button clicked.');
       await page.waitForTimeout(1000); // Wait for potential UI transitions after click
     } else {
       // If the specific modal is not visible, try the generic accept button
-      await page.waitForSelector(genericAcceptButtonSelector, { state: 'visible', timeout: 3000 });
+      await page.waitForSelector(genericAcceptButtonSelector, { state: 'visible', timeout: 1000 });
       console.log('No specific modal detected. Found generic "Accept" button, clicking it...');
       await page.click(genericAcceptButtonSelector);
       console.log('Generic "Accept" button clicked.');
@@ -119,28 +119,48 @@ export async function runSketchAutomation(
       '.next-btn' 
     ];
 
-    // Limit attempts to avoid infinite loops
-    for (let i = 0; i < 5; i++) {
-        // unstable explicit wait to let UI settle
+    // Navigate through wizard steps until we reach the animation selection page
+    const maxAttempts = 20;
+    for (let i = 0; i < maxAttempts; i++) {
+        // Wait for UI to settle
         await page.waitForTimeout(2000); 
 
-        // Check if we are at the end (Animation page)
-        // Look for the canvas or specific UI elements of the result page
-        const isAnimationPage = await page.$('canvas'); 
-        // Note: The intermediate steps also have canvas, so we might need a stronger signal.
-        // The finding-joints page has a canvas too. 
-        // Usually the last page has the "Share" or distinct layout.
+        // Check if we've reached the final step by looking for "Add animation" text
+        const pageText = await page.textContent('body');
+        const isAnimationPage = pageText && pageText.includes('Add animation');
         
-        // Let's try to find the "Next" button and click it if visible
-        const nextBtn = await page.$(nextButtonSelectors[0]); // Simple check first
+        if (isAnimationPage) {
+            console.log('Reached animation selection page (found "Add animation" text).');
+            
+            // Click a random animation from the grid container
+            const gridContainer = await page.$('.grid-container');
+            if (gridContainer) {
+                const gridItems = await gridContainer.$$('div');
+                if (gridItems.length > 0) {
+                    // Pick a random child div to click
+                    const randomIndex = Math.floor(Math.random() * gridItems.length);
+                    console.log(`Clicking random animation (index ${randomIndex} of ${gridItems.length})...`);
+                    await gridItems[randomIndex].click();
+                    await page.waitForTimeout(1000); // Wait for animation to load
+                } else {
+                    console.log('No items found in grid container.');
+                }
+            } else {
+                console.log('Grid container not found.');
+            }
+            break; // Exit the loop, we're done navigating
+        }
+        
+        // Not at final step yet - try to find and click the "Next" button
+        const nextBtn = await page.$(nextButtonSelectors[0]);
         if (nextBtn && await nextBtn.isVisible() && await nextBtn.isEnabled()) {
             console.log(`Clicking Next (attempt ${i + 1})...`);
             await nextBtn.click();
             continue;
         }
 
-        // Check if we see the animation options (Demo 1..4 usually implies buttons/thumbnails)
-        // This is heuristic.
+        // If no Next button found and not at animation page, log and continue
+        console.log(`Attempt ${i + 1}: No Next button found, waiting...`);
     }
 
     // After all navigation steps, ensure getAnimationId is available

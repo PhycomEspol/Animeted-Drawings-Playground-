@@ -36,8 +36,8 @@ export function convertMp4ToGif(
     const {
       cropTop = 50,
       cropBottom = 50,
-      cropLeft = 100,
-      cropRight = 100,
+      cropLeft = 0,
+      cropRight = 0,
       width = 480,
       fps = 15
     } = options;
