@@ -16,7 +16,7 @@ export const renderService = {
 
     isBusy = true;
     const id = uuidv4();
-    const timestamp = Date.now();
+    const createdAt = new Date().toISOString();
     
     // Input/Output paths
     const inputExt = path.extname(file.originalname) || '.png';
@@ -36,15 +36,14 @@ export const renderService = {
     // Create Firestore Doc
     const docData: RenderRequest = {
       id,
-      createdAt: timestamp,
+      createdAt,
       status: 'running',
       inputPath,
       outputPath: null,
       outputUrl: null,
-      demoIndex,
     };
     
-    await db.collection('renders').doc(id).set(docData);
+    await db.collection('phycom_draws').doc(id).set(docData);
 
     // Start processing asynchronously (Fire and Forget from API perspective? 
     // Spec says Synchronous Request Flow: "Return outputUrl" implies waiting.
@@ -52,9 +51,7 @@ export const renderService = {
     // This implies we MUST wait for Playwright to finish.
     
     try {
-      const startTime = Date.now();
       const videoUrl = await runSketchAutomation(inputPath, outputPath, demoIndex);
-      const durationMs = Date.now() - startTime;
 
       // Update Firestore
       const outputUrl = `http://localhost:3000/files/outputs/${outputFilename}`;
@@ -63,10 +60,9 @@ export const renderService = {
         outputPath,
         outputUrl,
         videoUrl,  // Store the final animation video URL
-        durationMs
       };
       
-      await db.collection('renders').doc(id).update(updateData);
+      await db.collection('phycom_draws').doc(id).update(updateData);
       
       isBusy = false;
       
@@ -75,7 +71,7 @@ export const renderService = {
     } catch (err: any) {
       isBusy = false;
       const errorMsg = err.message || 'Unknown error';
-      await db.collection('renders').doc(id).update({
+      await db.collection('phycom_draws').doc(id).update({
         status: 'error',
         error: errorMsg
       });

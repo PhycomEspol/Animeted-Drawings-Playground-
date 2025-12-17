@@ -34,7 +34,7 @@ This is an all-day demo POC; it must run on-demand and never keep Playwright run
 1) User uploads image from UI → `POST /api/render` (multipart/form-data).
 2) API:
    - writes input file to `/storage/inputs/<id>.png`
-   - creates Firestore doc `renders/<id>` = `{ status: "running", ... }`
+   - creates Firestore doc `phycom_draws/<id>` = `{ status: "running", ... }`
    - runs Playwright job (headless, single-run)
    - saves output to `/storage/outputs/<id>.png`
    - updates Firestore doc to `{ status: "done", outputPath, outputUrl }`
@@ -94,18 +94,16 @@ README.md
   - use any local projectId, e.g. `meta-automation-poc`
 
 ### Data model (Firestore)
-Collection: `renders`
+Collection: `phycom_draws`
 Document id: `<id>` (UUID)
 Fields:
 - `status`: `"running" | "done" | "error"`
-- `createdAt`: number (Date.now())
-- `updatedAt`: number
-- `demoIndex`: number
+- `createdAt`: string (ISO 8601 format)
 - `inputPath`: string
 - `outputPath`: string | null
 - `outputUrl`: string | null
+- `videoUrl`: string | null
 - `error`: string | null
-- `durationMs`: number | null
 
 ### Mutex
 - If busy, return HTTP 429 `{ error: "Renderer busy" }`.
