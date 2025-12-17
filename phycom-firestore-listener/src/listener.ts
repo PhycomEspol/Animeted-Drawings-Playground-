@@ -5,7 +5,8 @@
 
 import { db } from './firestore.js';
 import { execute } from './usecase.js';
-import type { PhycomDrawDoc, ListenerConfig } from './types.js';
+import type { PhycomDrawDoc, ListenerConfig, OnDocProcessedCallback } from './types.js';
+import type { DrawItem } from './apiTypes.js';
 
 const COLLECTION_NAME = 'phycom_draws';
 
@@ -15,11 +16,15 @@ const outputPathCache = new Map<string, string | null>();
 // Track if this is the first snapshot (to skip initial data)
 let isFirstSnapshot = true;
 
+// Store the current config for access in nested functions
+let currentConfig: ListenerConfig | null = null;
+
 /**
  * Start listening to the phycom_draws collection
  */
 export function startListener(config: ListenerConfig): void {
   const { idempotentMode } = config;
+  currentConfig = config;
   
   console.log('👂 Starting Firestore listener...');
   console.log(`   Collection: ${COLLECTION_NAME}`);
@@ -165,6 +170,12 @@ async function processDocument(
         outputProcessedAt: Date.now(),
       });
       console.log(`   📝 Marked ${docId} as processed`);
+    }
+    
+    // Call SSE callback if provided
+    if (currentConfig?.onDocProcessed) {
+      const outputUrl = (data as Record<string, unknown>).outputUrl as string | undefined;
+      currentConfig.onDocProcessed(docId, outputPath, outputUrl, data);
     }
   } catch (error) {
     console.error(`❌ Error processing document ${docId}:`, error);

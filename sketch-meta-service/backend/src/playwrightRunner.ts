@@ -135,7 +135,11 @@ export async function runSketchAutomation(
             // Click a random animation from the grid container
             const gridContainer = await page.$('.grid-container');
             if (gridContainer) {
-                const gridItems = await gridContainer.$$('div');
+                // Wait for grid items to fully populate (fixes race condition in headless mode)
+                await page.waitForTimeout(1500);
+                
+                // Use specific selector to target only clickable animation items (divs containing images)
+                const gridItems = await gridContainer.$$('div:has(img)');
                 if (gridItems.length > 0) {
                     // Pick a random child div to click
                     const randomIndex = Math.floor(Math.random() * gridItems.length);

@@ -48,4 +48,18 @@ export interface ListenerConfig {
   
   /** Whether to use idempotent mode */
   idempotentMode: boolean;
+  
+  /** Callback when a document is processed (for SSE broadcasting) */
+  onDocProcessed?: OnDocProcessedCallback;
 }
+
+/**
+ * Callback type for when a document is processed
+ */
+export type OnDocProcessedCallback = (
+  docId: string,
+  outputPath: string,
+  outputUrl: string | undefined,
+  data: PhycomDrawDoc
+) => void;
+

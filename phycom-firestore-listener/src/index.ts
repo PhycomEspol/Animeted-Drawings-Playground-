@@ -6,7 +6,10 @@
 import 'dotenv/config';
 import { logFirestoreConfig, projectId } from './firestore.js';
 import { startListener } from './listener.js';
-import type { ListenerConfig } from './types.js';
+import { startServer } from './server.js';
+import { broadcastDrawUpdate } from './sseManager.js';
+import type { ListenerConfig, PhycomDrawDoc } from './types.js';
+import type { DrawItem } from './apiTypes.js';
 
 // Configuration
 const COLLECTION_NAME = 'phycom_draws';
@@ -25,11 +28,26 @@ async function main(): Promise<void> {
   logFirestoreConfig();
   console.log();
   
-  // Build listener config
+  // Start HTTP server
+  startServer();
+  console.log();
+  
+  // Build listener config with SSE callback
   const config: ListenerConfig = {
     projectId,
     collectionName: COLLECTION_NAME,
     idempotentMode: IDEMPOTENT_MODE,
+    onDocProcessed: (docId: string, outputPath: string, outputUrl: string | undefined, data: PhycomDrawDoc) => {
+      const drawItem: DrawItem = {
+        id: docId,
+        outputPath,
+        outputUrl: outputUrl || outputPath,
+        createdAt: (data as Record<string, unknown>).createdAt as number | undefined,
+        updatedAt: data.updatedAt ?? undefined,
+        status: (data as Record<string, unknown>).status as string | undefined,
+      };
+      broadcastDrawUpdate(drawItem);
+    },
   };
   
   // Start the listener (runs indefinitely)

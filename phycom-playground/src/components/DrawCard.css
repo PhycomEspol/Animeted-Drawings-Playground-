@@ -1,0 +1,10 @@
+.draw-item {
+  position: absolute;
+}
+
+.draw-item img,
+.draw-item video {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+}
