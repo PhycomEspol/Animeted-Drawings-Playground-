@@ -1,0 +1,18 @@
+/**
+ * World Styles
+ * GPU-accelerated container for all world content
+ */
+
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+  /* Initial position - will be updated by camera controller */
+  transform: translate3d(0, 0, 0);
+  /* Background image */
+  background-image: url('../assets/Background.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}

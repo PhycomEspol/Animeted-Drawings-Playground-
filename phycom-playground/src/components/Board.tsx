@@ -1,9 +1,13 @@
 /**
- * Board component - displays draws at random positions
+ * Board component - displays draws inside World/Viewport camera system
  */
 
+import { useRef, useEffect } from 'react';
 import type { DrawItem } from '../types';
 import { DrawCard } from './DrawCard';
+import { Viewport } from './Viewport';
+import { World } from './World';
+import { useCameraController } from '../hooks/useCameraController';
 import './Board.css';
 
 interface BoardProps {
@@ -11,6 +15,16 @@ interface BoardProps {
 }
 
 export function Board({ draws }: BoardProps) {
+  const worldRef = useRef<HTMLDivElement>(null);
+  const camera = useCameraController(worldRef);
+
+  // Start camera animation on mount
+  useEffect(() => {
+    camera.start();
+    // camera.setSpeed(100);
+    return () => camera.pause();
+  }, [camera]);
+
   if (draws.length === 0) {
     return (
       <div className="board">
@@ -25,9 +39,13 @@ export function Board({ draws }: BoardProps) {
 
   return (
     <div className="board">
-      {draws.map(draw => (
-        <DrawCard key={draw.id} draw={draw} />
-      ))}
+      <Viewport>
+        <World ref={worldRef}>
+          {draws.map(draw => (
+            <DrawCard key={draw.id} draw={draw} />
+          ))}
+        </World>
+      </Viewport>
     </div>
   );
 }

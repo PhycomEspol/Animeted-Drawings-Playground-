@@ -1,10 +1,12 @@
 .draw-item {
   position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
 }
 
 .draw-item img,
 .draw-item video {
   max-width: 200px;
   max-height: 200px;
-  border-radius: 8px;
 }

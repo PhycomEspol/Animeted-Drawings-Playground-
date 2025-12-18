@@ -1,0 +1,11 @@
+/**
+ * Viewport Styles
+ * Camera frame that clips the world content
+ */
+
+.viewport {
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.3);
+}

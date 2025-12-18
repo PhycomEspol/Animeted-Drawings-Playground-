@@ -1,5 +1,6 @@
 /**
  * DrawCard component - displays just the image/video
+ * Uses GPU-accelerated positioning with translate3d
  */
 
 import type { DrawItem } from '../types';
@@ -18,9 +19,9 @@ function isVideo(url: string): boolean {
 }
 
 export function DrawCard({ draw }: DrawCardProps) {
+  // Use translate3d for GPU-accelerated positioning
   const style = draw.position ? {
-    left: draw.position.x,
-    top: draw.position.y,
+    transform: `translate3d(${draw.position.x}px, ${draw.position.y}px, 0)`,
   } : {};
 
   return (

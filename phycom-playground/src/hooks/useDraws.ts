@@ -4,19 +4,15 @@
 
 import { useReducer, useEffect, useCallback, useRef } from 'react';
 import type { DrawItem, DrawsState, DrawsAction, ConnectionStatus } from '../types';
+import { getRandomWorldPosition } from '../utils/safeAreaUtils';
 
 const LISTENER_BASE_URL = import.meta.env.VITE_LISTENER_BASE_URL || 'http://localhost:4001';
 
 /**
- * Get random position within viewport bounds
+ * Get random position within world safe area
  */
 function getRandomPosition(): { x: number; y: number } {
-  const maxX = Math.max(50, window.innerWidth - 250);
-  const maxY = Math.max(50, window.innerHeight - 250);
-  return {
-    x: Math.floor(Math.random() * maxX),
-    y: Math.floor(Math.random() * maxY),
-  };
+  return getRandomWorldPosition();
 }
 
 /**
@@ -66,12 +62,24 @@ const initialState: DrawsState = {
   connectionStatus: 'connecting',
 };
 
+interface UseDrawsOptions {
+  /** Callback when a new draw is added (not updates) */
+  onNewDraw?: () => void;
+}
+
 /**
  * Custom hook for managing draws with SSE
  */
-export function useDraws() {
+export function useDraws(options: UseDrawsOptions = {}) {
   const [state, dispatch] = useReducer(drawsReducer, initialState);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const existingIdsRef = useRef<Set<string>>(new Set());
+  const onNewDrawRef = useRef(options.onNewDraw);
+  
+  // Keep callback ref updated
+  useEffect(() => {
+    onNewDrawRef.current = options.onNewDraw;
+  }, [options.onNewDraw]);
 
   // Fetch initial draws
   const fetchDraws = useCallback(async () => {
@@ -79,6 +87,8 @@ export function useDraws() {
       const response = await fetch(`${LISTENER_BASE_URL}/api/draws`);
       if (!response.ok) throw new Error('Failed to fetch draws');
       const data: DrawItem[] = await response.json();
+      // Store existing IDs to detect new ones later
+      data.forEach(d => existingIdsRef.current.add(d.id));
       dispatch({ type: 'LOAD_INITIAL', payload: data });
     } catch (error) {
       console.error('Error fetching draws:', error);
@@ -113,6 +123,15 @@ export function useDraws() {
       try {
         const draw: DrawItem = JSON.parse(event.data);
         console.log('Received draw_updated:', draw.id);
+        
+        // Check if this is a NEW draw (not an update)
+        const isNew = !existingIdsRef.current.has(draw.id);
+        if (isNew) {
+          existingIdsRef.current.add(draw.id);
+          // Play SFX for new draws
+          onNewDrawRef.current?.();
+        }
+        
         dispatch({ type: 'UPSERT_DRAW', payload: draw });
       } catch (error) {
         console.error('Error parsing SSE event:', error);
